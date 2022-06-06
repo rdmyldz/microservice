@@ -15,13 +15,21 @@ COPY go.* ./
 RUN go mod download
 
 COPY *.go ./
-RUN CGO_ENABLED=1 go build -o emailer
+RUN CGO_ENABLED=1 go build -o /app/emailer
 ENTRYPOINT ["./emailer"]
 
-# FROM busybox
-# WORKDIR /app
-# COPY --from=build /src/emailer .
-# COPY --from=build /usr/include/tesseract /usr/include/tesseract
-# COPY --from=build /usr/include/leptonica /usr/include/leptonica 
+FROM debian:buster
+RUN set -eux; \
+	apt-get update; \
+	apt-get install -y --no-install-recommends \
+	libtesseract-dev \
+	libleptonica-dev \
+	tesseract-ocr-tur \
+	tesseract-ocr-eng \
+	; \
+	rm -rf /var/lib/apt/lists/*
 
-# ENTRYPOINT ["/app/emailer"]
+WORKDIR /app
+COPY --from=build /app/emailer .
+
+ENTRYPOINT ["/app/emailer"]

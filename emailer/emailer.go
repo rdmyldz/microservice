@@ -78,7 +78,6 @@ func main() {
 
 	result := make(chan *Result)
 	go func() {
-		defer close(result)
 		for res := range result {
 			if res.err != nil {
 				log.Printf("something happened. Email won't be sent: %v", res.err)
@@ -89,6 +88,7 @@ func main() {
 	}()
 
 	go func() {
+		defer close(result)
 		for d := range msgs {
 			go func(d amqp.Delivery) {
 				var res Result
@@ -111,7 +111,6 @@ func main() {
 				res.content = text
 				result <- &res
 			}(d)
-
 		}
 	}()
 
