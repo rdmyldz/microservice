@@ -17,9 +17,10 @@ func failOnErr(err error, msg string) {
 }
 
 type message struct {
-	Name  string
-	Email string
-	Image []byte
+	Name     string
+	Email    string
+	Filename string
+	Image    []byte
 }
 
 func decode(data []byte) (*message, error) {

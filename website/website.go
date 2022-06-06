@@ -16,15 +16,14 @@ import (
 var ErrForm = fmt.Errorf("all form fields must be filled")
 
 type message struct {
-	Name  string
-	Email string
-	Image []byte
+	Name     string
+	Email    string
+	Filename string
+	Image    []byte
 }
 
-// Compile templates on start of the application
 var templates = template.Must(template.ParseFiles("index.html"))
 
-// Display the named template
 func (a *application) display(w http.ResponseWriter, page string, data interface{}) {
 	templates.ExecuteTemplate(w, page+".html", data)
 }
@@ -54,12 +53,13 @@ func (a *application) uploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	m := message{
-		Name:  name,
-		Email: email,
-		Image: b,
+		Name:     name,
+		Email:    email,
+		Filename: filename,
+		Image:    b,
 	}
 
-	pubData, err := encode(m)
+	pubData, err := encode(&m)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -102,7 +102,7 @@ func main() {
 	http.ListenAndServe(":"+port, nil)
 }
 
-func encode(msg message) ([]byte, error) {
+func encode(msg *message) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
 	err := enc.Encode(msg)
