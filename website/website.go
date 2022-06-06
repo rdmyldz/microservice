@@ -104,7 +104,7 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
-	// Upload route
+
 	http.HandleFunc("/", app.handleHome)
 
 	log.Printf("listening on %s", port)
@@ -136,7 +136,7 @@ func (a *application) publish(data []byte) error {
 	}
 	defer ch.Close()
 
-	q, err := ch.QueueDeclare("hello", false, false, false, false, nil)
+	q, err := ch.QueueDeclare("img_text", false, false, false, false, nil)
 	if err != nil {
 		return fmt.Errorf("failed to declare a queue: %w", err)
 	}

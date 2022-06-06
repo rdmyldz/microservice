@@ -29,7 +29,7 @@ func decode(data []byte) (*message, error) {
 	dec := gob.NewDecoder(r)
 	err := dec.Decode(&msg)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("decoding err: %w", err)
 	}
 
 	return &msg, nil
@@ -44,6 +44,20 @@ func getText(data []byte) ([]string, error) {
 	return handle.ProcessImageMem(data)
 }
 
+type Result struct {
+	name     string
+	filename string
+	email    string
+	content  []string
+	err      error
+}
+
+func sendEmail(name, filename, email string, content []string) {
+	log.Printf("email is sending to %s", email)
+	log.Printf("\nDear %s,\nthe file %s's content is attached\n\n%s\n",
+		name, filename, content)
+}
+
 func main() {
 	fmt.Println("rabbit cons_receive")
 
@@ -54,7 +68,7 @@ func main() {
 	failOnErr(err, "failed to open a channel")
 	defer ch.Close()
 
-	q, err := ch.QueueDeclare("hello", false, false, false, false, nil)
+	q, err := ch.QueueDeclare("img_text", false, false, false, false, nil)
 	failOnErr(err, "failed to declare a queue")
 
 	msgs, err := ch.Consume(q.Name, "", true, false, false, false, nil)
@@ -62,20 +76,40 @@ func main() {
 
 	forever := make(chan bool)
 
+	result := make(chan *Result)
+	go func() {
+		defer close(result)
+		for res := range result {
+			if res.err != nil {
+				log.Printf("something happened. Email won't be sent: %v", res.err)
+				continue
+			}
+			sendEmail(res.name, res.filename, res.email, res.content)
+		}
+	}()
+
 	go func() {
 		for d := range msgs {
 			go func(d amqp.Delivery) {
+				var res Result
 				msg, err := decode(d.Body)
 				if err != nil {
-					log.Fatal(err)
+					res.err = err
+					result <- &res
+					return
 				}
+				res.name = msg.Name
+				res.filename = msg.Filename
+				res.email = msg.Email
 
 				text, err := getText(msg.Image)
 				if err != nil {
-					log.Fatal(err)
+					res.err = err
+					result <- &res
+					return
 				}
-				log.Printf("mail sent to: %s", msg.Email)
-				log.Printf("text: %v", text)
+				res.content = text
+				result <- &res
 			}(d)
 
 		}
