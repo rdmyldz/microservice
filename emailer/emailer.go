@@ -26,7 +26,7 @@ type message struct {
 func decode(data []byte) (*message, error) {
 	r := bytes.NewReader(data)
 	var msg message
-	dec := gob.NewDecoder(r) // Will read from network.
+	dec := gob.NewDecoder(r)
 	err := dec.Decode(&msg)
 	if err != nil {
 		return nil, err
