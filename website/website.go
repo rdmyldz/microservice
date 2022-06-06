@@ -66,7 +66,7 @@ func (a *application) uploadFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = publish(pubData)
+	err = a.publish(pubData)
 	if err != nil {
 		log.Println(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -86,10 +86,19 @@ func (a *application) handleHome(w http.ResponseWriter, r *http.Request) {
 }
 
 type application struct {
+	conn *amqp.Connection
 }
 
 func main() {
-	app := &application{}
+	conn, err := NewConn()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	app := &application{
+		conn: conn,
+	}
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -102,6 +111,14 @@ func main() {
 	http.ListenAndServe(":"+port, nil)
 }
 
+func NewConn() (*amqp.Connection, error) {
+	conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to RabbitMQ: %w", err)
+	}
+	return conn, err
+}
+
 func encode(msg *message) ([]byte, error) {
 	var buf bytes.Buffer
 	enc := gob.NewEncoder(&buf)
@@ -112,14 +129,8 @@ func encode(msg *message) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-func publish(data []byte) error {
-	conn, err := amqp.Dial("amqp://guest:guest@rabbitmq:5672/")
-	if err != nil {
-		return fmt.Errorf("failed to connect to RabbitMQ: %w", err)
-	}
-	defer conn.Close()
-
-	ch, err := conn.Channel()
+func (a *application) publish(data []byte) error {
+	ch, err := a.conn.Channel()
 	if err != nil {
 		return fmt.Errorf("failed to open a channel: %w", err)
 	}
