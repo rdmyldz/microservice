@@ -1,0 +1,4 @@
+github.com/rdmyldz/i2t v0.0.0-20220508215353-2c205fbe57d0 h1:XyvLEQpRFxy/sQDKaVYa/lN3mhz0npb4wlPdT1/602g=
+github.com/rdmyldz/i2t v0.0.0-20220508215353-2c205fbe57d0/go.mod h1:dmX0Q8v8oie8d8BHa7UNUXp3GEFcCHefH04g44hlmmI=
+github.com/streadway/amqp v1.0.0 h1:kuuDrUJFZL1QYL9hUNuCxNObNzB0bV/ZG5jV3RWAQgo=
+github.com/streadway/amqp v1.0.0/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=

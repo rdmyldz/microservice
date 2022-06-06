@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  rabbitmq:
+    image: 'rabbitmq:3.10-management'
+    container_name: "rabbitmq"
+
+    ports:
+      # The standard AMQP protocol port
+      - '5672:5672'
+      # HTTP management UI
+      - '15672:15672'
+
+    networks:
+      - microservice_network
+  
+  website:
+    build: ./website
+    ports:
+      - "8080:8080"
+    depends_on:
+      - rabbitmq
+    networks:
+      - microservice_network
+
+    restart: on-failure
+  
+  emailer:
+    build: ./emailer
+    depends_on:
+      - rabbitmq
+    
+    networks:
+      - microservice_network
+
+    restart: on-failure
+
+networks:
+  microservice_network:
+    driver: bridge
